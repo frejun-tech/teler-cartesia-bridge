@@ -42,7 +42,7 @@ async def stream_flow(payload: CallFlowRequest):
         "action": "stream",
         "ws_url": ws_url,
         "chunk_size": 400,
-        "sample_rate": "8k",  
+        "sample_rate": "16k",  
         "record": True
     }
     return JSONResponse(stream_flow)

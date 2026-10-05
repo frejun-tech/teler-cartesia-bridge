@@ -25,7 +25,7 @@ class Setting(BaseSettings):
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     
     # Other config
-    CHUNK_BUFFER_SIZE: int = int(os.getenv("CHUNK_BUFFER_SIZE", 15000))
+    CHUNK_BUFFER_SIZE: int = int(os.getenv("CHUNK_BUFFER_SIZE", 10))
     
     class Config:
         env_file = ".env"

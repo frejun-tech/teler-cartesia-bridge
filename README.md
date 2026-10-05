@@ -50,8 +50,11 @@ Ensure you have the following installed / available:
 | Variable            | Description            | Default  |
 | ------------------- | ---------------------- | -------- |
 | `CARTESIA_API_KEY`  | Your Cartesia API key  | Required |
-| `CARTESIA_AGENT_ID` | Your Cartesia Agent ID | Required |
+| `CARTESIA_WS_URL`   | Cartesia Websocket URL | Required |
 | `TELER_API_KEY`     | Your Teler API key     | Required |
+| `CHUNK_BUFFER_SIZE` | Chunks buffer size     | 10       |
+| `SERVER_PORT`       | Port Number            | 8000     |
+| `CHUNK_BUFFER_SIZE` | Chunks buffer size     | 10       |
 | `NGROK_AUTHTOKEN`   | Your ngrok auth token  | Required |
 
 ## API Endpoints
