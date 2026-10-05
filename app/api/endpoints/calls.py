@@ -1,7 +1,5 @@
-import json
 import asyncio
 import logging
-import time
 
 import websockets
 from fastapi import (APIRouter, HTTPException, WebSocket, status)
@@ -13,7 +11,8 @@ from app.utils.get_access_token import get_access_token
 from app.core.config import settings
 from app.utils.teler_to_cartesia import teler_to_cartesia
 from app.utils.cartesia_to_teler import cartesia_to_teler
-from app.utils.teler_client import TelerClient
+from app.utils.teler_client import teler_client
+from app.models.call import Call
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -58,7 +57,6 @@ async def initiate_call(call_request: CallRequest):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Cartesia_API_KEY not configured"
             )
-        teler_client = TelerClient(api_key=settings.TELER_API_KEY)
         call = await teler_client.voice.calls.create(
             from_number=call_request.from_number,
             to_number=call_request.to_number,
@@ -105,22 +103,14 @@ async def media_stream(teler_ws: WebSocket):
         ) as cartesia_ws:
             logger.info("[media-stream] Successfully connected to Cartesia WebSocket")
             
-            payload = json.dumps({
-                "event": "start",
-                "config": { "input_format": "mulaw_8000" },
-                "agent": {
-                    "introduction": "Hello, I'm an AI assistant",
-                    "system_prompt": "### Your Role \n You are a helpful assistant"
-                }
-            })
-            await cartesia_ws.send(payload)
+            call = Call()
 
             recv_task = asyncio.create_task(
-                teler_to_cartesia(cartesia_ws, teler_ws), 
+                teler_to_cartesia(cartesia_ws, teler_ws, call), 
                 name="teler_to_cartesia"
             )
             send_task = asyncio.create_task(
-                cartesia_to_teler(cartesia_ws, teler_ws),
+                cartesia_to_teler(cartesia_ws, teler_ws, call),
                 name="cartesia_to_teler"
             )
 

@@ -1,66 +1,74 @@
-import json
-import base64
-import logging
-from fastapi import WebSocket
+from fastapi.websockets import WebSocketState
 from app.core.config import settings
+import base64
+from app.models.call import Call
+import json
+import logging
 from websockets.exceptions import ConnectionClosed
-from app.utils.resample import resample
 
 logger = logging.getLogger(__name__)
 
 
-# FRAME_BYTES = 120
-
-async def cartesia_to_teler(cartesia_ws, teler_ws):
+async def cartesia_to_teler(cartesia_ws, teler_ws, call: Call):
     """
     Receive from Cartesia and forward to Teler.
     """
-    # audio_buffer = b""
+    audio_buffer = []
     chunk_id = 0
-    # audio_buffer = b""
-    # # CHUNK_BUFFER_SIZE = settings.CHUNK_BUFFER_SIZE
-    # FRAME_BYTES = 160
+
+    async def _flush():
+        nonlocal chunk_id, audio_buffer
+        if not audio_buffer:
+            return
+        try:
+            combined_audio = b"".join(audio_buffer)
+
+            downsampled_data = call.audio_processor.downsample(combined_audio)
+            downsampled_b64 = base64.b64encode(downsampled_data).decode('utf-8')
+
+            await teler_ws.send_json({
+                "type": "audio",
+                "audio_b64": downsampled_b64,
+                "chunk_id": chunk_id
+            })
+            logger.debug(f"Sent audio to Teler (chunk {chunk_id})")
+            chunk_id += 1
+            audio_buffer = []
+        except Exception as e:
+            logger.error(f"Error processing buffered audio: {e}")
+            audio_buffer = []
 
     try:
         async for message in cartesia_ws:
             data = json.loads(message)
 
             if data.get('event') == "ack":
-                logger.info(data)
-                logger.info(f"[cartesia] Server {data.get('event')}")
+                call.server_acknowledged = True
+                logger.info(f"[cartesia] Server acknowledged the request.")
 
             elif data.get('event') == "media_output":
                 media = data.get('media')
-                payload = media.get('payload')
+                media_payload = media.get('payload')
+                audio_buffer.append(base64.b64decode(media_payload))
 
-                # audio_b64 = resample(payload)
-                logger.info(f"Payload: ${payload}")
-
-                # chunk_bytes = base64.b64decode(audio_b64)
-                # audio_buffer += chunk_bytes
-
-                # while len(audio_buffer) >= FRAME_BYTES:
-                #     frame = audio_buffer[:FRAME_BYTES]
-                #     audio_buffer = audio_buffer[FRAME_BYTES:]
-
-                await teler_ws.send_json({
-                    "type": "audio",
-                    "audio_b64": payload,
-                    "chunk_id": chunk_id,
-                })
-                logger.info("Audio sent to Teler.")
-                chunk_id += 1
+                # flush once the buffer is filled
+                if len(audio_buffer) >= settings.CHUNK_BUFFER_SIZE:
+                    logger.debug("Buffer filled.")
+                    await _flush()
+                else:
+                    logger.debug("Bufferring the chunks")
 
 
             elif data.get('event') == "clear":
-                # audio_buffer = b""
+                logger.debug("Clear the buffer")
+                audio_buffer = []
                 await teler_ws.send_json({"type": "clear"})
     except Exception as e:
         logger.error(f"Error in remote stream handler: {e}")
 
 
     except ConnectionClosed:
-        logger.info("Cartesia WebSocket disconnected")
+        logger.info(f"Cartesia WebSocket disconnected, Error: {e}")
 
         if teler_ws.client_state != WebSocketState.DISCONNECTED:
             await teler_ws.close()

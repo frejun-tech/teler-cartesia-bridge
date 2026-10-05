@@ -10,22 +10,24 @@ This project is a reference implementation to bridge **Teler** and **Cartesia**.
 
 ## Features
 
-- Post request to Cartesia to get the Join URL (websocket URL)
 - Real-time streaming of media via WebSockets
 - Bi-directional communication between Teler client and Cartesia
+- Automatic audio resampling from Cartesia (16kHz) to Teler (8kHz)
 - Sample structure for deployment (Docker, environment variables)
 - Basic error handling and connection management
 
 ---
 
-### Prerequisites
+## Prerequisites
 
 Ensure you have the following installed / available:
 
 - Docker
 - Valid API credentials / access:
-  - Teler account / API key / endpoints (frejun account)
+  - Teler account / API key (frejun account)
   - Cartesia API access
+  - Cartesia Agent ID
+  - ngrok auth token
 
 ---
 
@@ -47,30 +49,32 @@ Ensure you have the following installed / available:
 
 ## Environment Variables
 
-| Variable            | Description            | Default  |
-| ------------------- | ---------------------- | -------- |
-| `CARTESIA_API_KEY`  | Your Cartesia API key  | Required |
-| `CARTESIA_WS_URL`   | Cartesia Websocket URL | Required |
-| `TELER_API_KEY`     | Your Teler API key     | Required |
-| `CHUNK_BUFFER_SIZE` | Chunks buffer size     | 10       |
-| `SERVER_PORT`       | Port Number            | 8000     |
-| `CHUNK_BUFFER_SIZE` | Chunks buffer size     | 10       |
-| `NGROK_AUTHTOKEN`   | Your ngrok auth token  | Required |
+| Variable            | Description                                    | Default  |
+| ------------------- | ---------------------------------------------- | -------- |
+| `CARTESIA_WS_URL`   | Cartesia Websocket URL with agent ID           | Required |
+| `CARTESIA_API_KEY`  | Your Cartesia API key                          | Required |
+| `TELER_API_KEY`     | Your Teler API key                             | Required |
+| `SERVER_DOMAIN`     | Server domain for callbacks                    | Required |
+| `SERVER_HOST`       | Server host address                            | 0.0.0.0  |
+| `SERVER_PORT`       | Server port                                    | 8000     |
+| `LOG_LEVEL`         | Logging level                                  | INFO     |
+| `NGROK_AUTHTOKEN`   | Your ngrok authentication token                | Required |
+| `CHUNK_BUFFER_SIZE` | Audio chunk buffer size                        | 10       |
 
 ## API Endpoints
 
-- `GET /` - Health check with server domain
+- `GET /` - Health check
 - `GET /health` - Service status
 - `GET /ngrok-status` - Current ngrok status and URL
-- `POST /api/v1/calls/initiate-call` - Start a new call with dynamic phone numbers
+- `POST /api/v1/calls/initiate-call` - Start a new call
 - `POST /api/v1/calls/flow` - Get call flow configuration
-- `WebSocket /api/v1/calls/media-stream` - Audio streaming between teler and cartesia
-- `POST /api/v1/webhooks/receiver` - Teler → Cartesia webhook receiver
+- `WebSocket /api/v1/calls/media-stream` - Audio streaming
+- `POST /api/v1/webhooks/receiver` - Teler webhook receiver
 
 ### Call Initiation Example
 
 ```bash
-curl -X POST "http://your-domain/api/v1/calls/initiate-call" \
+curl -X POST "https://your-domain/api/v1/calls/initiate-call" \
   -H "Content-Type: application/json" \
   -d '{
     "from_number": "+1234567890",
