@@ -13,6 +13,7 @@ from app.utils.teler_to_cartesia import teler_to_cartesia
 from app.utils.cartesia_to_teler import cartesia_to_teler
 from app.utils.teler_client import teler_client
 from app.models.call import Call
+from teler import CallFlow
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,14 +38,14 @@ async def stream_flow(payload: CallFlowRequest):
     Return stream flow as JSON Response containing websocket url to connect
     """
     ws_url = f"wss://{settings.SERVER_DOMAIN}/api/v1/calls/media-stream"
-    stream_flow = {
-        "action": "stream",
-        "ws_url": ws_url,
-        "chunk_size": 400,
-        "sample_rate": "16k",  
-        "record": True
-    }
-    return JSONResponse(stream_flow)
+    return JSONResponse(
+        CallFlow.stream(
+            ws_url=ws_url,
+            sample_rate="16k",
+            chunk_size=400,
+            record=True,
+        )
+    )
 
 @router.post("/initiate-call", status_code=status.HTTP_200_OK)
 async def initiate_call(call_request: CallRequest):
