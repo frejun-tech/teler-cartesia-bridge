@@ -83,7 +83,6 @@ Ensure you have the following installed / available:
 - **Public HTTPS/WSS endpoint:** Teler must reach this server from the internet for the flow URL, the media WebSocket and webhooks. The Docker setup uses ngrok for this; in production, use your own domain with TLS.
 - **Outbound internet access** from the server to the Teler API and to the provider's API.
 - **Ports:** `8000` (app) and `4040` (ngrok inspector) must be free on the host when using Docker Compose.
-- See [Network requirements](https://frejun.com/docs/teler/telephony/network-requirements/) for Teler's IP and protocol details.
 
 ---
 
