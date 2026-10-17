@@ -4,6 +4,11 @@
 
 A reference integration between **Teler** and **Cartesia**, based on media streaming over WebSockets.
 
+## What is Teler?
+
+Teler is a programmable voice API by FreJun. It handles carriers, phone numbers, and real-time audio streaming so you can connect AI models directly to phone calls. → [FreJun-Teler](https://frejun.com/teler/)
+
+
 ## About
 
 This project is a reference implementation to bridge **Teler** and **Cartesia**. It enables real-time media streaming over WebSockets, facilitating live audio interactions.
